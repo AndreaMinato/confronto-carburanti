@@ -4,16 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Confronto carburanti</title>
-<meta name="description" content="Confronta il costo per 100 km di benzina, diesel, GPL, metano ed elettrico.">
+<meta name="description" content="Quanto dovrebbe consumare un'auto a benzina, diesel, GPL, metano o elettrica per costare come la tua?">
 <style>
   :root {
     --bg: #f7f7f5; --card: #fff; --fg: #1b1b1b; --muted: #6b6b6b; --line: #e3e3de;
-    --accent: #0b6e4f; --bar: #0b6e4f; --bar-bg: #ecefe9;
+    --accent: #0b6e4f; --good: #0b6e4f; --bad: #b3261e;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #141514; --card: #1d1f1d; --fg: #ececec; --muted: #9a9a9a; --line: #2e312e;
-      --accent: #4fc79b; --bar: #4fc79b; --bar-bg: #262926;
+      --accent: #4fc79b; --good: #4fc79b; --bad: #ff8a80;
     }
   }
   * { box-sizing: border-box; }
@@ -24,58 +24,63 @@
   p.lead { color: var(--muted); margin: 0 0 24px; }
   section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
   table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 6px 4px; vertical-align: middle; }
-  th { font-size: .8rem; color: var(--muted); font-weight: 600; }
-  td.name { font-weight: 600; white-space: nowrap; }
+  td { text-align: left; padding: 6px 4px; vertical-align: middle; }
+  td.name { font-weight: 600; white-space: nowrap; width: 100px; }
   label.field { display: flex; align-items: center; gap: 6px; }
   label.field + label.field { margin-top: 4px; }
   input[type=number] { width: 100%; max-width: 110px; padding: 6px 8px; font: inherit; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
   .unit { color: var(--muted); font-size: .85rem; white-space: nowrap; }
   .el-toggle { display: flex; gap: 12px; font-size: .85rem; color: var(--muted); margin-top: 4px; }
-  .controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 12px; }
-  select { font: inherit; padding: 4px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
-  .row { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; padding: 10px 0; border-top: 1px solid var(--line); }
-  .row:first-of-type { border-top: 0; }
+  select { font: inherit; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  .mine { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+  .mine-cost { font-size: 1.3rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .row { display: grid; grid-template-columns: 100px 1fr; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  .row:first-child { border-top: 0; padding-top: 0; }
   .row .label { font-weight: 600; }
-  .bar { position: relative; height: 22px; background: var(--bar-bg); border-radius: 4px; overflow: hidden; }
-  .bar span { position: absolute; inset: 0 auto 0 0; background: var(--bar); border-radius: 4px; }
-  .cost { font-variant-numeric: tabular-nums; font-weight: 700; }
-  .equiv { grid-column: 2; color: var(--muted); font-size: .9rem; font-variant-numeric: tabular-nums; }
-  .ref .label::after { content: " · rif."; color: var(--accent); font-weight: 400; font-size: .8rem; }
+  .threshold { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .threshold small { font-size: .85rem; font-weight: 400; color: var(--muted); }
+  .typical { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: .9rem; }
+  .typical .muted { color: var(--muted); }
+  .verdict { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .verdict.good { color: var(--good); }
+  .verdict.bad { color: var(--bad); }
   footer { color: var(--muted); font-size: .8rem; }
   button { font: inherit; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); cursor: pointer; }
   @media (max-width: 520px) {
-    thead { display: none; }
-    tr { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; padding: 8px 0; border-top: 1px solid var(--line); }
-    td.name { grid-column: 1 / -1; }
+    tr { display: grid; grid-template-columns: 1fr; gap: 4px; padding: 8px 0; border-top: 1px solid var(--line); }
     input[type=number] { max-width: none; }
+    .row { grid-template-columns: 1fr; }
+    .typical { grid-column: 1; }
   }
 </style>
 </head>
 <body>
 <main>
   <h1>Confronto carburanti</h1>
-  <p class="lead">Inserisci prezzi e consumi: calcoliamo quanto costa percorrere 100 km con ogni alimentazione e a che consumo equivale nel carburante di riferimento.</p>
+  <p class="lead">Indica la tua auto e i prezzi attuali: calcoliamo quanto dovrebbe consumare un'auto con un'altra alimentazione per spendere uguale o meno.</p>
 
   <section>
-    <h2>Prezzi e consumi</h2>
-    <table>
-      <thead><tr><th></th><th>Prezzo</th><th>Consumo</th></tr></thead>
-      <tbody id="inputs"></tbody>
-    </table>
+    <h2>La mia auto</h2>
+    <div class="mine">
+      <label>Alimentazione <select id="mia"></select></label>
+      <div id="mine-cons"></div>
+      <div>Costo: <span class="mine-cost" id="mine-cost"></span></div>
+    </div>
   </section>
 
   <section>
-    <div class="controls">
-      <h2 style="margin:0">Risultato</h2>
-      <label>Riferimento <select id="ref"></select></label>
-    </div>
+    <h2>Prezzi attuali</h2>
+    <table><tbody id="prices"></tbody></table>
+  </section>
+
+  <section>
+    <h2>Per spendere uguale o meno, dovrebbe consumare…</h2>
     <div id="results"></div>
   </section>
 
   <footer>
     <p>I valori sono salvati nell'URL: copia il link per condividere il confronto. <button id="reset" type="button">Ripristina valori di default</button></p>
-    <p>Prezzi di default indicativi, aggiornati a settembre 2026. Il costo non include manutenzione, bollo e acquisto del veicolo.</p>
+    <p>Prezzi e consumi tipici di default indicativi, aggiornati a settembre 2026. Per l'elettrico il consumo è quello mostrato dall'auto: le perdite di ricarica sono incluse nel costo. Il costo non include manutenzione, bollo e acquisto del veicolo.</p>
   </footer>
 </main>
 
@@ -89,12 +94,12 @@ const FUELS = [
   { id: 'elettrico', name: 'Elettrico', unit: 'kWh', price: { casa: 0.28, colonnina: 0.65 }, cons: 15.0,
     loss: { casa: 12, colonnina: 5 } },
 ];
-const DEFAULT_REF = 'benzina';
+const DEFAULT_MINE = 'benzina';
 
 const state = loadState();
 
 function defaults() {
-  const s = { ref: DEFAULT_REF, elMode: 'casa' };
+  const s = { mia: DEFAULT_MINE, elMode: 'casa' };
   for (const f of FUELS) {
     if (f.id === 'elettrico') {
       s.p_casa = f.price.casa;
@@ -121,7 +126,7 @@ function loadState() {
       s[k] = q.get(k);
     }
   }
-  if (!FUELS.some(f => f.id === s.ref)) s.ref = DEFAULT_REF;
+  if (!FUELS.some(f => f.id === s.mia)) s.mia = DEFAULT_MINE;
   if (!['casa', 'colonnina'].includes(s.elMode)) s.elMode = 'casa';
   return s;
 }
@@ -140,6 +145,8 @@ const priceOf = f => f.id === 'elettrico'
   ? state['p_' + state.elMode] * (1 + state['l_' + state.elMode] / 100)
   : state['p_' + f.id];
 const consOf = f => state['c_' + f.id];
+const costOf = f => priceOf(f) * consOf(f);
+const mine = () => FUELS.find(f => f.id === state.mia);
 
 const fmt = (n, d = 2) => Number.isFinite(n) ? n.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
 
@@ -147,12 +154,17 @@ function numInput(key, unit) {
   return `<label class="field"><input type="number" min="0" step="0.01" inputmode="decimal" data-key="${key}" value="${state[key]}"><span class="unit">${unit}</span></label>`;
 }
 
-function renderInputs() {
-  document.getElementById('inputs').innerHTML = FUELS.map(f => {
+function renderMine() {
+  document.getElementById('mia').innerHTML = FUELS.map(f => `<option value="${f.id}" ${f.id === state.mia ? 'selected' : ''}>${f.name}</option>`).join('');
+  const f = mine();
+  document.getElementById('mine-cons').innerHTML = numInput('c_' + f.id, f.unit + '/100 km');
+}
+
+function renderPrices() {
+  document.getElementById('prices').innerHTML = FUELS.map(f => {
     let price;
     if (f.id === 'elettrico') {
-      const pk = 'p_' + state.elMode;
-      price = numInput(pk, '€/' + f.unit) + numInput('l_' + state.elMode, '% perdite ricarica') + `
+      price = numInput('p_' + state.elMode, '€/' + f.unit) + numInput('l_' + state.elMode, '% perdite ricarica') + `
         <div class="el-toggle">
           <label><input type="radio" name="elMode" value="casa" ${state.elMode === 'casa' ? 'checked' : ''}> Casa</label>
           <label><input type="radio" name="elMode" value="colonnina" ${state.elMode === 'colonnina' ? 'checked' : ''}> Colonnina</label>
@@ -160,75 +172,78 @@ function renderInputs() {
     } else {
       price = numInput('p_' + f.id, '€/' + f.unit);
     }
-    return `<tr><td class="name">${f.name}</td><td>${price}</td><td>${numInput('c_' + f.id, f.unit + '/100 km')}</td></tr>`;
+    return `<tr><td class="name">${f.name}</td><td>${price}</td></tr>`;
   }).join('');
 }
 
-function renderRefSelect() {
-  const sel = document.getElementById('ref');
-  sel.innerHTML = FUELS.map(f => `<option value="${f.id}" ${f.id === state.ref ? 'selected' : ''}>${f.name}</option>`).join('');
-}
+const others = () => FUELS.filter(f => f.id !== state.mia);
 
 function renderResults() {
-  const ref = FUELS.find(f => f.id === state.ref);
-  const refPrice = priceOf(ref);
-  const rows = FUELS
-    .map(f => ({ f, cost: priceOf(f) * consOf(f) }))
-    .sort((a, b) => a.cost - b.cost);
-  const max = Math.max(...rows.map(r => r.cost), 0.0001);
-
-  document.getElementById('results').innerHTML = rows.map(({ f, cost }) => {
-    // Consumo equivalente: quanto dovrebbe consumare il veicolo di riferimento per spendere lo stesso.
-    const eqPer100 = refPrice > 0 ? cost / refPrice : NaN;
-    const eqKmPerUnit = eqPer100 > 0 ? 100 / eqPer100 : NaN;
-    const equiv = f.id === ref.id
-      ? `${fmt(100 / consOf(f), 1)} km/${f.unit}`
-      : `= ${ref.name.toLowerCase()} a ${fmt(eqKmPerUnit, 1)} km/${ref.unit} (${fmt(eqPer100, 2)} ${ref.unit}/100 km)`;
-    return `<div class="row ${f.id === ref.id ? 'ref' : ''}">
+  document.getElementById('results').innerHTML = others().map(f => `<div class="row">
       <div class="label">${f.name}</div>
-      <div class="bar" title="${fmt(cost)} €/100 km"><span style="width:${(cost / max) * 100}%"></span></div>
-      <div></div>
-      <div><span class="cost">${fmt(cost)} €/100 km</span></div>
-      <div class="equiv">${equiv}</div>
-    </div>`;
-  }).join('');
+      <div class="threshold"></div>
+      <div class="typical">
+        <span class="muted">Consumo tipico</span>
+        ${numInput('c_' + f.id, f.unit + '/100 km')}
+        <span class="verdict"></span>
+      </div>
+    </div>`).join('');
+  refreshVerdicts();
 }
 
-document.getElementById('inputs').addEventListener('input', e => {
+function renderAll() {
+  renderMine();
+  renderPrices();
+  renderResults();
+}
+
+// Aggiorna solo i numeri calcolati: ri-renderizzare gli input farebbe perdere il focus.
+function refreshVerdicts() {
+  const myCost = costOf(mine());
+  document.getElementById('mine-cost').textContent = fmt(myCost) + ' €/100 km';
+  const rows = document.querySelectorAll('#results .row');
+  others().forEach((f, i) => {
+    const row = rows[i];
+    // Consumo di pareggio: consumo massimo a cui l'alternativa costa quanto la mia auto.
+    const maxPer100 = priceOf(f) > 0 ? myCost / priceOf(f) : NaN;
+    const minKmPerUnit = maxPer100 > 0 ? 100 / maxPer100 : NaN;
+    row.querySelector('.threshold').innerHTML = `≤ ${fmt(maxPer100)} ${f.unit}/100 km <small>(≥ ${fmt(minKmPerUnit, 1)} km/${f.unit})</small>`;
+    const diff = costOf(f) - myCost;
+    const v = row.querySelector('.verdict');
+    v.className = 'verdict ' + (diff <= 0 ? 'good' : 'bad');
+    v.textContent = diff <= 0 ? `conviene, −${fmt(-diff)} €/100 km` : `non conviene, +${fmt(diff)} €/100 km`;
+  });
+}
+
+document.querySelector('main').addEventListener('input', e => {
   const key = e.target.dataset.key;
   if (!key) return;
   const n = parseFloat(e.target.value);
   if (!Number.isFinite(n) || n < 0) return;
   state[key] = n;
   saveState();
-  renderResults();
+  refreshVerdicts();
 });
 
-document.getElementById('inputs').addEventListener('change', e => {
-  if (e.target.name !== 'elMode') return;
-  state.elMode = e.target.value;
+document.querySelector('main').addEventListener('change', e => {
+  if (e.target.name === 'elMode') {
+    state.elMode = e.target.value;
+  } else if (e.target.id === 'mia') {
+    state.mia = e.target.value;
+  } else {
+    return;
+  }
   saveState();
-  renderInputs();
-  renderResults();
-});
-
-document.getElementById('ref').addEventListener('change', e => {
-  state.ref = e.target.value;
-  saveState();
-  renderResults();
+  renderAll();
 });
 
 document.getElementById('reset').addEventListener('click', () => {
   Object.assign(state, defaults());
   saveState();
-  renderInputs();
-  renderRefSelect();
-  renderResults();
+  renderAll();
 });
 
-renderInputs();
-renderRefSelect();
-renderResults();
+renderAll();
 </script>
 </body>
 </html>
