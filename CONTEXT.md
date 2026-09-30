@@ -9,3 +9,4 @@
 - **Riferimento**: alimentazione scelta dall'utente in cui esprimere i consumi equivalenti.
 - **Consumo equivalente**: consumo che dovrebbe avere un veicolo del riferimento per avere lo stesso costo per 100 km di un'altra alimentazione (costo per 100 km ÷ prezzo del riferimento).
 - **Modalità di ricarica**: casa o colonnina; determina quale prezzo usa l'elettrico.
+- **Perdite di ricarica**: quota di energia pagata ma non accumulata in batteria (maggiore a casa che in colonnina); il consumo dell'elettrico è inteso a valle della batteria, quindi le perdite aumentano il costo per 100 km.

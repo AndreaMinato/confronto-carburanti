@@ -28,6 +28,7 @@
   th { font-size: .8rem; color: var(--muted); font-weight: 600; }
   td.name { font-weight: 600; white-space: nowrap; }
   label.field { display: flex; align-items: center; gap: 6px; }
+  label.field + label.field { margin-top: 4px; }
   input[type=number] { width: 100%; max-width: 110px; padding: 6px 8px; font: inherit; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); }
   .unit { color: var(--muted); font-size: .85rem; white-space: nowrap; }
   .el-toggle { display: flex; gap: 12px; font-size: .85rem; color: var(--muted); margin-top: 4px; }
@@ -85,7 +86,8 @@ const FUELS = [
   { id: 'diesel',    name: 'Diesel',    unit: 'l',   price: 1.70, cons: 5.0 },
   { id: 'gpl',       name: 'GPL',       unit: 'l',   price: 0.72, cons: 8.0 },
   { id: 'metano',    name: 'Metano',    unit: 'kg',  price: 1.40, cons: 4.0 },
-  { id: 'elettrico', name: 'Elettrico', unit: 'kWh', price: { casa: 0.28, colonnina: 0.65 }, cons: 15.0 },
+  { id: 'elettrico', name: 'Elettrico', unit: 'kWh', price: { casa: 0.28, colonnina: 0.65 }, cons: 15.0,
+    loss: { casa: 12, colonnina: 5 } },
 ];
 const DEFAULT_REF = 'benzina';
 
@@ -97,6 +99,8 @@ function defaults() {
     if (f.id === 'elettrico') {
       s.p_casa = f.price.casa;
       s.p_colonnina = f.price.colonnina;
+      s.l_casa = f.loss.casa;
+      s.l_colonnina = f.loss.colonnina;
     } else {
       s['p_' + f.id] = f.price;
     }
@@ -130,7 +134,11 @@ function saveState() {
   history.replaceState(null, '', qs ? '?' + qs : location.pathname);
 }
 
-const priceOf = f => f.id === 'elettrico' ? state['p_' + state.elMode] : state['p_' + f.id];
+// Per l'elettrico il consumo inserito è quello a valle della batteria: le perdite di ricarica
+// si pagano ma non compaiono nel consumo, quindi le applichiamo al prezzo effettivo.
+const priceOf = f => f.id === 'elettrico'
+  ? state['p_' + state.elMode] * (1 + state['l_' + state.elMode] / 100)
+  : state['p_' + f.id];
 const consOf = f => state['c_' + f.id];
 
 const fmt = (n, d = 2) => Number.isFinite(n) ? n.toLocaleString('it-IT', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
@@ -144,7 +152,7 @@ function renderInputs() {
     let price;
     if (f.id === 'elettrico') {
       const pk = 'p_' + state.elMode;
-      price = numInput(pk, '€/' + f.unit) + `
+      price = numInput(pk, '€/' + f.unit) + numInput('l_' + state.elMode, '% perdite ricarica') + `
         <div class="el-toggle">
           <label><input type="radio" name="elMode" value="casa" ${state.elMode === 'casa' ? 'checked' : ''}> Casa</label>
           <label><input type="radio" name="elMode" value="colonnina" ${state.elMode === 'colonnina' ? 'checked' : ''}> Colonnina</label>
